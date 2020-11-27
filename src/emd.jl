@@ -97,15 +97,15 @@ function find_cycle(tail, head, left, right, left_parents, right_parents)
             for neighbour in right[node]
                 # Need the next condition to avoid turning around straight away
                 # ERROR HERE
-                if neighbour == tail
+                # if neighbour == tail
                     # println("HERE ", right_parents[node], " ", neighbour)
-                end
+                # end
                 if right_parents[node] != neighbour
                     # Check whether the loop has closed
                     if neighbour == tail
                         # println("Setting left_parents[", tail, "] = ", node)
                         left_parents[tail] = node
-                        return
+                        return true
                     end
                     left_parents[neighbour] = node
                     enqueue!(q, [neighbour, 0])
@@ -120,6 +120,7 @@ function find_cycle(tail, head, left, right, left_parents, right_parents)
             end
         end
     end
+    return false
 end
 
 # Disregard this function
@@ -221,38 +222,44 @@ function my_emd(a, b, C)
     NorthWest!(left, right, P, a, b)
     left_parents = Vector{UInt32}(undef, n)
     right_parents = Vector{UInt32}(undef, m)
-    for _ in 1:100
+    enter_i = -1
+    enter_j = -1
+    while true
         # println(objective(P, C))
         updatePotential!(u, v, C, left, right)
         #
         # Testing wheter updatePotential works
         # println("Potential update error = ", sum(abs2, (P .!= 0).*(C - (u.+v'))))
 
-
+        prev_i = enter_i
+        prev_j = enter_j
         enter_i, enter_j, done = find_entering(u, v, C)
         # println(done)
-        if done > 0
-            break
+        if done > 0 || (prev_i == enter_i && prev_j == enter_j)
+            return P
         end
+
+        # println(objective(P, C), (enter_i, enter_j))
 
         # Add entering edge to tree (creating a unique cycle)
         push!(left[enter_i], enter_j)
         push!(right[enter_j], enter_i)
 
         right_parents[enter_j] = enter_i
-        find_cycle(enter_i, enter_j, left, right, left_parents, right_parents)
+        is_cycle = find_cycle(enter_i, enter_j, left, right, left_parents, right_parents)
 
         # cycle = get_cycle(enter_i, left_parents, right_parents)
-        imp, imp_i, imp_j = calculate_improvement(enter_i, enter_j, left_parents, right_parents, P)
-
-        update_tree(enter_i, enter_j, imp, imp_i, imp_j, P, left, right, left_parents, right_parents)
+        if is_cycle
+            imp, imp_i, imp_j = calculate_improvement(enter_i, enter_j, left_parents, right_parents, P)
+            update_tree(enter_i, enter_j, imp, imp_i, imp_j, P, left, right, left_parents, right_parents)
+        end
     end
-    return P
+    # return P
 end
 
 # Size of support of two measures. n corrseponds to rows and m to columns.
-n = 10
-m = 11
+n = 99
+m = 100
 # Random points with C the n × m cost (squared distance) matrix
 x = randn(n)
 y = randn(m)
@@ -267,4 +274,3 @@ b = ones(1, m)./m
 
 P = my_emd(a,b,C)
 # @btime P = my_emd(a,b,C)
-println(isapprox(P, γ))
