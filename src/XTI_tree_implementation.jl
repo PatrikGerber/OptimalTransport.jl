@@ -2,48 +2,48 @@ using BenchmarkTools
 
 ####################### TEST CASE 1 ###########################
 
-# parents = [0,1,7,3,6,1,6,2,7]
-# thread = [2,8,4,1,7,5,9,6,3]
-# rev_thread = [4,1,9,3,6,8, 5,2,7]
-# succ_num = [9,2,2,1,1,6,4,1,1]
-# last_succ = [4,8,4,4,5,4,4,8,9]
-#
-# (u,v) = (9,8)
-# (p,q) = (6,7)
-#
-# # Correct results after step III
-# parents3 = [0,1,7,3,6,1,9,2,0]
-# thread3 = [2, 8, 4, 9, 1, 5, 3, 6, 7]
-# rev_thread3 = [5, 1, 7, 3, 6, 8, 9, 2, 4]
-# succ_num3 = [5, 2, 2, 1, 1, 2, 3, 1, 4]
-# last_succ3 = [5, 8, 4, 4, 5, 5, 4, 8, 4]
-# println(parents == parents3 && thread3 == thread && rev_thread3 == rev_thread && succ_num3 == succ_num && last_succ3 == last_succ)
-#
-# # Correct results after step IV
-# parents4 = [0, 1, 7, 3, 6, 1, 9, 2, 8]
-# thread4 = [2,8,4,6,1,5,3,9,7]
-# rev_thread4 = [5, 1, 7, 3, 6, 4, 9, 2, 8]
-# last_succ4 = [5, 4, 4, 4, 5, 5, 4, 4, 4]
-# succ_num4 = [9, 6, 2, 1, 1, 2, 3, 5, 4]
-# println(parents == parents4 && thread4 == thread && rev_thread4 == rev_thread && succ_num4 == succ_num && last_succ4 == last_succ)
+parents = [0,1,7,3,6,1,6,2,7]
+thread = [2,8,4,1,7,5,9,6,3]
+rev_thread = [4,1,9,3,6,8, 5,2,7]
+succ_num = [9,2,2,1,1,6,4,1,1]
+last_succ = [4,8,4,4,5,4,4,8,9]
+
+(u,v) = (9,8)
+(p,q) = (6,7)
+
+# Correct results after step III
+parents3 = [0,1,7,3,6,1,9,2,0]
+thread3 = [2, 8, 4, 9, 1, 5, 3, 6, 7]
+rev_thread3 = [5, 1, 7, 3, 6, 8, 9, 2, 4]
+succ_num3 = [5, 2, 2, 1, 1, 2, 3, 1, 4]
+last_succ3 = [5, 8, 4, 4, 5, 5, 4, 8, 4]
+
+
+# Correct results after step IV
+parents4 = [0, 1, 7, 3, 6, 1, 9, 2, 8]
+thread4 = [2,8,4,6,1,5,3,9,7]
+rev_thread4 = [5, 1, 7, 3, 6, 4, 9, 2, 8]
+last_succ4 = [5, 4, 4, 4, 5, 5, 4, 4, 4]
+succ_num4 = [9, 6, 2, 1, 1, 2, 3, 5, 4]
+
 
 
 ############################# TEST CASE 2 ####################################
 
-parents = [0,1,2,2,3,3,6,7,1,9,9,11]
-thread = [9,3,6,1,4,7,8,5,11,2,12,10]
-rev_thread = [4,10,2,5,8,3,6,7,1,12,9,11]
-succ_num = [12, 7, 5, 1, 1, 3, 2, 1, 4, 1, 2, 1]
-last_succ = [4, 4, 5, 4, 5, 8, 8, 8, 10,10,12,12]
-
-(u,v) = (7,12)
-(p,q) = (2,3)
-
-parents4 = [0,1,6,2,3,7,12,7,1,9,9,11]
-thread4 = [9, 4, 5, 1, 10,3,8,6,11,2,12,7]
-rev_thread4 = [4, 10,6,2,3,8,12,7,1,5,9,11]
-succ_num4 = [12, 2, 2, 1, 1, 3, 5, 1, 9, 1, 7, 6]
-last_succ4 = [4, 4, 5, 4, 5, 5, 5, 8, 10, 10, 5, 5]
+# parents = [0,1,2,2,3,3,6,7,1,9,9,11]
+# thread = [9,3,6,1,4,7,8,5,11,2,12,10]
+# rev_thread = [4,10,2,5,8,3,6,7,1,12,9,11]
+# succ_num = [12, 7, 5, 1, 1, 3, 2, 1, 4, 1, 2, 1]
+# last_succ = [4, 4, 5, 4, 5, 8, 8, 8, 10,10,12,12]
+#
+# (u,v) = (7,12)
+# (p,q) = (2,3)
+#
+# parents4 = [0,1,6,2,3,7,12,7,1,9,9,11]
+# thread4 = [9, 4, 5, 1, 10,3,8,6,11,2,12,7]
+# rev_thread4 = [4, 10,6,2,3,8,12,7,1,5,9,11]
+# succ_num4 = [12, 2, 2, 1, 1, 3, 5, 1, 9, 1, 7, 6]
+# last_succ4 = [4, 4, 5, 4, 5, 5, 5, 8, 10, 10, 5, 5]
 
 ########################### TEST CASE 3 ######################################
 # parents = [0,1,2,2,4,4,3,3,7,8,8,10,10,1,14,15,15,14,17]
@@ -52,8 +52,7 @@ last_succ4 = [4, 4, 5, 4, 5, 5, 5, 8, 10, 10, 5, 5]
 # (u,v) = (8, 17)
 # (p,q) = (3, 8)
 
-function update(parents, thread, rev_thread, succ_num, last_succ, p, q, u, v)
-    ################# STEP I #################
+function STEP_I(parents, thread, rev_thread, succ_num, last_succ, p, q, u, v)
     # Setting up variables to be used in this step
     y = rev_thread[q]
     t_q = succ_num[q]
@@ -88,12 +87,9 @@ function update(parents, thread, rev_thread, succ_num, last_succ, p, q, u, v)
 
     # Thread and rev_thread:
     thread[f_q], rev_thread[q] = q, f_q
+end
 
-    ################# STEP III ###############
-    x₁ = 1
-    x₂ = q
-    y₁ = v
-    y₂ = u
+function STEP_III(parents, thread, rev_thread, succ_num, last_succ, p, q, u, v, x₁, x₂, y₁, y₂)
     x = y₂
     t_x₂ = succ_num[x₂]
     w = last_succ[y₂]
@@ -157,8 +153,9 @@ function update(parents, thread, rev_thread, succ_num, last_succ, p, q, u, v)
     for u in dirty_revs
         rev_thread[thread[u]] = u
     end
+end
 
-    ############### STEP IV #################
+function STEP_IV(parents, thread, rev_thread, succ_num, last_succ, p, q, u, v, x₁, x₂, y₁, y₂)
     # Setting up variables
     dirty_revs = []
     s_y₁ = thread[y₁]
@@ -189,21 +186,123 @@ function update(parents, thread, rev_thread, succ_num, last_succ, p, q, u, v)
     end
 end
 
-update(parents, thread, rev_thread, succ_num, last_succ, p, q, u, v)
+function update(parents, thread, rev_thread, succ_num, last_succ, p, q, u, v)
+    ################# STEP I #################
+    STEP_I(parents, thread, rev_thread, succ_num, last_succ, p, q, u, v)
+
+    # Update the potentials of T(q)
+
+    x₁ = 1
+    x₂ = q
+    y₁ = v
+    y₂ = u
+    ################# STEP III ###############
+    STEP_III(parents, thread, rev_thread, succ_num, last_succ, p, q, u, v, x₁, x₂, y₁, y₂)
+
+
+    ############### STEP IV #################
+    STEP_IV(parents, thread, rev_thread, succ_num, last_succ, p, q, u, v, x₁, x₂, y₁, y₂)
+end
+
+@time update(parents, thread, rev_thread, succ_num, last_succ, p, q, u, v)
 println(parents == parents4 && thread == thread4 && rev_thread == rev_thread4 && last_succ == last_succ4 && succ_num == succ_num4)
 
-# function flow(a,b)
-#     if a > b
-#         a,b = b,a
-#     end
-#     return _flow
-#
-#
-# # Input = u,v and flow where flow[(i-1)*m+j] is the flow between (i,j)
-# function find_join()
-#     left,right = u,v
-#     if u > v
-#         left,right = right, left
-#     end
-#     δ = 1
-#     while succ_num[]
+
+n=2
+m=3
+_cost = (randn(2) .- randn(3)').^2
+a = ones(1, n)./n
+b = ones(1, m)./m
+_flow = [1/3 1/6 0; 0 1/6 1/3]
+_f = [0, cost(2,4)-cost(1,4)]
+_g = [cost(1,3),cost(1,4), cost(2,5) - (cost(2,4) - cost(1,4))]
+# println(_f .+ _g' - _cost)
+
+parents = [0,4,1,1,2]
+thread = [4,5,1,2,3]
+rev_thread = [3, 4, 5, 1, 2]
+succ_num = [5, 2, 1, 3, 1]
+last_succ = [3, 5, 3, 5, 5]
+
+
+# _flow = n × m (Sparse) Matrix representing the flow.
+function flow(a,b)
+    return _flow[min(a,b),max(a,b)-n]
+end
+
+function cost(a, b)
+    return _cost[min(a,b), max(a,b)-n]
+end
+
+function f(a)
+    if a < 1 || a > n
+        throw(error("a needs to be in [n]"))
+    end
+    return _f[a]
+end
+
+function g(a)
+    tmp = a - n
+    if tmp < 1 || tmp > m
+        throw(error("a-n needs to be in [m]"))
+    end
+    return _g[tmp]
+end
+
+function find_entering()
+    curr_min = 0
+    enter1 = enter2 = -1
+    for i in 1:n
+        for j in 1:m
+            tmp = _cost[i,j] - _f[i] - _g[j]
+            if tmp < currmin
+                currmin = tmp
+                if i == parent
+                enter1, enter2 = i,j
+            end
+        end
+    end
+    return i,j
+end
+
+# Input = (enter1, enter2) the edge being added and flow where flow[(i-1)*m+j] is the flow between (i,j)
+function find_leaving(enter1, enter2, parents, succ_num)
+    left,right = enter1, enter2
+    if enter1 > enter2
+        left,right = right, left
+    end
+    left_δ = right_δ = 1
+    enter_left = enter_right = -1
+    state = -1
+    while left != right
+        if succ_num[left] > succ_num[right]
+            p_right = parents[right]
+            if p_right < right
+                candidate_δ = flow(p_right, right)
+                if candidate_δ < right_δ
+                    state = 1
+                    right_δ = candidate_δ
+                    enter_left = p_right
+                    enter_right = right
+                end
+            end
+            right = p_right
+        else
+            left = parents_left
+            if left < p_left
+                candidate_δ = flow(left, p_left)
+                if candidate_δ <= left_δ
+                    state = 0
+                    left_δ = candidate_δ
+                    enter_left = left
+                    enter_right = p_left
+                end
+            end
+            left = p_left
+        end
+    end
+    if left_δ <= right_δ
+        return left_δ, enter_left, enter_right
+
+    return δ, state, enter_left, enter_right
+end
