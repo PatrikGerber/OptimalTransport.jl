@@ -352,21 +352,130 @@ function test()
     return true
 end
 
-C = test()
+function preconditioned_emd(a, b, C, P, α = .05)
+    n = length(a)
+    m = length(b)
+
+    # left[i] is the set of nodes on the right that node i on the left is connected to.
+    # right[j] is the set of nodes on the left that node j on the right is connecte to.
+    left = Array{BitSet}(undef, n)
+    right = Array{BitSet}(undef, m)
+
+    # Initializing the arrays of sets
+    for i in 1:n
+        left[i] = BitSet()
+    end
+    for j in 1:m
+        right[j] = BitSet()
+    end
+
+    # Initializing potentials
+    u = zeros(n)
+    v = zeros(m)
+
+    tmp = sort(P[:])[end-(n+m-1)]
+    for i in 1:n
+        for j in 1:m
+            if P[i,j] > tmp
+                push!(left[i], j)
+                push!(right[j], i)
+            end
+        end
+    end
+    left_parents = Vector{UInt32}(undef, n)
+    right_parents = Vector{UInt32}(undef, m)
+    enter_i = -1
+    enter_j = -1
+    node_queue = Vector{UInt32}(undef, n+m)
+    side_queue = Vector{Bool}(undef, n+m)
+
+    blk_size = max(10, floor(α*m*n))
+    blk_start = 1
+    while true
+        # println(objective(P, C))
+        updatePotential!(u, v, C, left, right)
+        #
+        # Testing wheter updatePotential works
+        # println("Potential update error = ", sum(abs2, (P .!= 0).*(C - (u.+v'))))
+
+        prev_i = enter_i
+        prev_j = enter_j
+        enter_i, enter_j, done = find_entering(u, v, C, blk_size, blk_start)
+        blk_start += blk_size
+        blk_start = (blk_start - 1)%(m*n) + 1
+
+        # println(done)
+        if done > 0 || (prev_i == enter_i && prev_j == enter_j)
+            return P
+        end
+
+        # println(objective(P, C), (enter_i, enter_j))
+
+        # Add entering edge to tree (creating a unique cycle)
+        push!(left[enter_i], enter_j)
+        push!(right[enter_j], enter_i)
+
+        right_parents[enter_j] = enter_i
+        is_cycle = find_cycle(enter_i, enter_j, left, right, left_parents, right_parents, node_queue, side_queue)
+
+        # cycle = get_cycle(enter_i, left_parents, right_parents)
+        if is_cycle
+            imp, imp_i, imp_j = calculate_improvement(enter_i, enter_j, left_parents, right_parents, P)
+            update_tree(enter_i, enter_j, imp, imp_i, imp_j, P, left, right, left_parents, right_parents)
+        end
+    end
+end
+
+function test()
+    # Size of support of two measures. n corrseponds to rows and m to columns.
+    ns = [3,5,10,15,29,47, 99, 200]
+    ms = [4,5,9,16,33,51,101, 200]
+    for i in 1:length(ns)
+        for j in 1:length(ms)
+            n = ns[i]
+            m = ms[j]
+            # Random points with C the n × m cost (squared distance) matrix
+            C = (randn(n) .- randn(m)').^2
+
+            # Uniform measures on the support
+            a = ones(1, n)./n
+            b = ones(1, m)./m
+
+            γ = OptimalTransport.emd(vec(a), vec(b), C);
+            # @btime γ = OptimalTransport.emd(vec(a), vec(b), C);
+
+            P = my_emd(a,b,C,0.2)
+            # @btime P = my_emd(a,b,C)
+            if !isapprox(γ, P)
+                println(sum(abs.(γ -P)))
+                return C
+            else
+                println("Test passed ", (i-1)*length(ms) + j, "/", length(ns)*length(ms))
+            end
+        end
+    end
+    return true
+end
+
+# C = test()
 
 
 m = 70
-n = 100
+n = 10
 # Random points with C the n × m cost (squared distance) matrix
 C = (randn(n) .- randn(m)').^2
-
+#
 # Uniform measures on the support
 a = ones(1, n)./n
 b = ones(1, m)./m
 
-γ = OptimalTransport.emd(vec(a), vec(b), C)
-@btime γ = OptimalTransport.emd(vec(a), vec(b), C);
+eps = 0.1
+γ = OptimalTransport.sinkhorn(vec(a), vec(b), C, eps; tol=1e-9, check_marginal_step=10, maxiter=1000)
 
+# @btime γ = OptimalTransport.emd(vec(a), vec(b), C)
+
+
+P = preconditioned_emd(a,b,C,γ,1)
 @btime P = my_emd(a,b,C,1)
 Threads.nthreads()
 
@@ -395,8 +504,8 @@ store P as sparse matrix ?
 
 
 
-m = 100
-n = 102
+m = 3
+n = 3
 # Random points with C the n × m cost (squared distance) matrix
 C = (randn(n) .- randn(m)').^2
 
@@ -427,9 +536,6 @@ P = zeros(n,m)
 u = zeros(n)
 v = zeros(m)
 
-blk_size = UInt32(max(1, floor(α*m*n)))
-blk_start = 1
-
 NorthWest!(left, right, P, a, b)
 
 left_parents = Vector{UInt32}(undef, n)
@@ -442,11 +548,11 @@ side_queue = Vector{Bool}(undef, n+m)
 updatePotential!(u, v, C, left, right)
 #
 # Testing wheter updatePotential works
-# println("Potential update error = ", sum(abs2, (P .!= 0).*(C - (u.+v'))))
+println("Potential update error = ", sum(abs2, (P .!= 0).*(C - (u.+v'))))
 
 prev_i = enter_i
 prev_j = enter_j
-enter_i, enter_j, done = find_entering(u, v, C, blk_size, blk_start)
+enter_i, enter_j, done = find_entering(u, v, C, 0, 0)
 blk_start += blk_size
 blk_start = (blk_start - 1)%(m*n) + 1
 
@@ -468,7 +574,6 @@ end
 
 println("gamma = P: ", isapprox(γ, P), " done: ", done == 1)
 println(objective(P, C)-0.04723320347060773)
-
 
 
 
