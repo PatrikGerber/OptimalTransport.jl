@@ -1,5 +1,6 @@
 using BenchmarkTools
 using OptimalTransport
+using LinearAlgebra
 
 ####################### TEST CASE 1 ###########################
 
@@ -67,6 +68,7 @@ function STEP_I(parents, thread, rev_thread, succ_num, last_succ, p, q, u, v)
 
     ptr = p
     while ptr > 0
+        println("Stuck here 1")
         succ_num[ptr] -= t_q
         ptr = parents[ptr]
     end
@@ -76,6 +78,7 @@ function STEP_I(parents, thread, rev_thread, succ_num, last_succ, p, q, u, v)
     end
     ptr = p
     while ptr != x⃰
+        println("Stuck here 2")
         last_succ[ptr] = y
         ptr = parents[ptr]
     end
@@ -107,6 +110,7 @@ function STEP_III(parents, thread, rev_thread, succ_num, last_succ, p, q, u, v, 
     dirty_revs = []
 
     while x != x₂
+        println("Stuck here 3")
         if son_x > 0
             parents[x] = son_x
         end
@@ -147,6 +151,7 @@ function STEP_III(parents, thread, rev_thread, succ_num, last_succ, p, q, u, v, 
 
         x = x₂
         while x != y₂
+            println("Stuck here 4")
             last_succ[x] = last_succ[x₂]
             x = parents[x]
         end
@@ -172,6 +177,7 @@ function STEP_IV(parents, thread, rev_thread, succ_num, last_succ, p, q, u, v, x
     thread[y₁], rev_thread[y₂] = y₂, y₁
     x = y₁
     while x != 0
+        println("Stuck here 5")
         succ_num[x] += t_y₂
         x = parents[x]
     end
@@ -181,6 +187,7 @@ function STEP_IV(parents, thread, rev_thread, succ_num, last_succ, p, q, u, v, x
     end
     x = y₁
     while x != x̄
+        println("Stuck here + ", (y₁, x, x̄))
         last_succ[x] = f_y₂
         x = parents[x]
     end
@@ -205,6 +212,7 @@ function update(parents, thread, rev_thread, succ_num, last_succ, p, q, u, v)
     prev = y₁
     tmp = last_succ[y₂]
     while prev != tmp
+        println("Stuck here 5")
         _potential[curr] = cost(curr, prev) - _potential[prev]
         prev, curr = curr, thread[curr]
     end
@@ -223,6 +231,7 @@ function flow(a,b)
 end
 
 function cost(a, b)
+    println("Lol here ", (a, b))
     return _cost[min(a,b), max(a,b)-n]
 end
 
@@ -254,13 +263,13 @@ function g(a)
 end
 
 # Returns the two nodes between which the entering edge lies
-function find_entering()
+function find_entering(n,m,_cost, _potential)
     curr_min = 0
     enter1 = enter2 = -1
     for i in 1:n
         for j in 1:m
             tmp = _cost[i,j] - _potential[i] - _potential[n+j]
-            if tmp < curr_min
+            if tmp < curr_min && parents[i] != j+n && parents[j+n] != i
                 curr_min = tmp
                 enter1, enter2 = i,j+n
             end
@@ -278,10 +287,11 @@ function find_leaving(enter1, enter2, parents, succ_num)
     left_δ = right_δ = 1
     left_left = left_right = right_left = right_right = -1
     while left != right
+        println("Stuck here 6")
         if succ_num[left] > succ_num[right]
             p_right = parents[right]
             if p_right < right
-                candidate_δ = flow(p_right, right)
+                candidate_δ = _flow[p_right, right - n]
                 if candidate_δ < right_δ
                     right_δ = candidate_δ
                     right_right = right
@@ -292,7 +302,7 @@ function find_leaving(enter1, enter2, parents, succ_num)
         else
             p_left = parents[left]
             if left < p_left
-                candidate_δ = flow(left, p_left)
+                candidate_δ = _flow[left, p_left-n]
                 if candidate_δ <= left_δ
                     left_δ = candidate_δ
                     left_left = left
@@ -320,26 +330,27 @@ function update_flow(u,v,δ, parents, succ_num)
     if u > v
         left,right = right, left
     end
-    println("LOL Adding δ to edge ", (left, right))
+    # println("LOL Adding δ to edge ", (left, right))
     _flow[left, right - n] = δ
     while left != right
+        println("Stuck here 7")
         if succ_num[left] > succ_num[right]
             p_right = parents[right]
             if p_right < right
-                println("Taking δ from edge ", (p_right, right))
+                # println("Taking δ from edge ", (p_right, right))
                 _flow[p_right, right-n] -= δ
             else
-                println("Adding δ to edge ", (right, p_right))
+                # println("Adding δ to edge ", (right, p_right))
                 _flow[right, p_right - n] += δ
             end
             right = p_right
         else
             p_left = parents[left]
             if left < p_left
-                println("Taking δ from edge ", (left, p_left))
+                # println("Taking δ from edge ", (left, p_left))
                 _flow[left, p_left-n] -= δ
             else
-                println("Adding δ to edge ", (p_left, left))
+                # println("Adding δ to edge ", (p_left, left))
                 _flow[p_left, left-n] += δ
             end
             left = p_left
@@ -347,38 +358,93 @@ function update_flow(u,v,δ, parents, succ_num)
     end
 end
 
-n=2
-m=3
-_cost = (randn(2) .- randn(3)').^2
-a = ones(1, n)./n
-b = ones(1, m)./m
-_flow = [1/3 1/6 0; 0 1/6 1/3]
-# _f = [0, cost(2,4)-cost(1,4)]
-# _g = [cost(1,3),cost(1,4), cost(2,5) - (cost(2,4) - cost(1,4))]
-_potential = [0, cost(2,4)-cost(1,4), cost(1,3),cost(1,4), cost(2,5) - (cost(2,4) - cost(1,4))]
-# println(_cost - (_potential[1:n] .+ _potential[end-m:end]'))
+# n=2
+# m=3
+# _cost = (randn(2) .- randn(3)').^2
+# a = ones(1, n)./n
+# b = ones(1, m)./m
+# _flow = [1/3 1/6 0; 0 1/6 1/3]
+# # _f = [0, cost(2,4)-cost(1,4)]
+# # _g = [cost(1,3),cost(1,4), cost(2,5) - (cost(2,4) - cost(1,4))]
+# _potential = [0, cost(2,4)-cost(1,4), cost(1,3),cost(1,4), cost(2,5) - (cost(2,4) - cost(1,4))]
+# # println(_cost - (_potential[1:n] .+ _potential[end-m:end]'))
+#
+# parents = [0,4,1,1,2]
+# thread = [4,5,1,2,3]
+# rev_thread = [3, 4, 5, 1, 2]
+# succ_num = [5, 2, 1, 3, 1]
+# last_succ = [3, 5, 3, 5, 5]
+#
+# # (u,v,p,q) = (5,1,1,4)
+# # update(parents, thread, rev_thread, succ_num, last_succ, p, q, u, v)
+#
+#
+#
+# @time γ = OptimalTransport.emd(vec(a), vec(b), _cost)
+#
+# @time while true
+#     enter1, enter2 = find_entering()
+#     δ, u, v, p, q = find_leaving(enter1, enter2, parents, succ_num)
+#
+#     if u > 0 && (u,v) != (q,p)
+#         update_flow(u, v, δ, parents, succ_num)
+#         update(parents, thread, rev_thread, succ_num, last_succ, p, q, u, v)
+#     else
+#         break
+#     end
+# end
 
-parents = [0,4,1,1,2]
-thread = [4,5,1,2,3]
-rev_thread = [3, 4, 5, 1, 2]
-succ_num = [5, 2, 1, 3, 1]
-last_succ = [3, 5, 3, 5, 5]
+function objective(P,C)
+    return sum(P.*C)
+end
 
-# (u,v,p,q) = (5,1,1,4)
+
+# enter1, enter2 = find_entering(n,n,_cost, _potential)
+# δ, u, v, p, q = find_leaving(enter1, enter2, parents, succ_num)
+#
+# update_flow(u, v, δ, parents, succ_num)
 # update(parents, thread, rev_thread, succ_num, last_succ, p, q, u, v)
 
+function my_emd()
+    maxiter = 100
+    while maxiter > 0
+        # println(maxiter)
+        enter1, enter2 = find_entering(n,n,_cost, _potential)
+        δ, u, v, p, q = find_leaving(enter1, enter2, parents, succ_num)
 
-
-@time γ = OptimalTransport.emd(vec(a), vec(b), _cost)
-
-@time while true
-    enter1, enter2 = find_entering()
-    δ, u, v, p, q = find_leaving(enter1, enter2, parents, succ_num)
-
-    if u > 0 && (u,v) != (q,p)
-        update_flow(u, v, δ, parents, succ_num)
-        update(parents, thread, rev_thread, succ_num, last_succ, p, q, u, v)
-    else
-        break
+        if u > 0 && (u,v) != (q,p)
+            update_flow(u, v, δ, parents, succ_num)
+            update(parents, thread, rev_thread, succ_num, last_succ, p, q, u, v)
+        else
+            break
+        end
+        maxiter -= 1
     end
 end
+
+
+
+n = 6
+a = b = ones(1, n)./n
+parents = vcat(0, (n+2):2n, 1, 1:(n-1))
+thread = vcat((n+2):2n, n+1, 1, 2:n)
+rev_thread = vcat(5, (n+2):2n, n, 1:(n-1))
+succ_num = vcat(2n, (2n-2:-2:2).-1, 1, (2(n-1)):-2:2)
+last_succ = vcat(5, fill(n, n-1), n+1, fill(n, n-1))
+
+_cost = (randn(n) .- randn(n)').^2
+_flow = Matrix(I(n)/n)
+_potential = zeros(2n)
+
+for i in 2:n
+    _potential[i+n] = _cost[i-1, i] - _potential[i-1]
+    _potential[i] = _cost[i,i] - _potential[n+i]
+end
+_potential[n+1] = _cost[1,1]
+
+
+my_emd()
+
+γ = OptimalTransport.emd(vec(a), vec(b), _cost)
+
+println(γ == _flow)
