@@ -68,7 +68,9 @@ function STEP_I(parents, thread, rev_thread, succ_num, last_succ, p, q, u, v)
 
     ptr = p
     while ptr > 0
-        println("Stuck here 1")
+        if debug
+            println("Stuck here 1")
+        end
         succ_num[ptr] -= t_q
         ptr = parents[ptr]
     end
@@ -78,7 +80,9 @@ function STEP_I(parents, thread, rev_thread, succ_num, last_succ, p, q, u, v)
     end
     ptr = p
     while ptr != x⃰
-        println("Stuck here 2")
+        if debug
+            println("Stuck here 2")
+        end
         last_succ[ptr] = y
         ptr = parents[ptr]
     end
@@ -96,9 +100,10 @@ end
 function STEP_III(parents, thread, rev_thread, succ_num, last_succ, p, q, u, v, x₁, x₂, y₁, y₂)
     x = y₂
     t_x₂ = succ_num[x₂]
+    t_x = succ_num[x]
     w = last_succ[y₂]
-    s_w = thread[w]
     z = thread[w]
+    s_w = thread[w]
     p_z = parents[z]
     p_x = parents[x]
     son_x = -1
@@ -110,14 +115,20 @@ function STEP_III(parents, thread, rev_thread, succ_num, last_succ, p, q, u, v, 
     dirty_revs = []
 
     while x != x₂
-        println("Stuck here 3")
+        if debug
+            println("Stuck here 3")
+        end
         if son_x > 0
             parents[x] = son_x
         end
-
-        succ_num[p_x] = t_x₂ - succ_num[x]
+        succ_num[p_x], t_x = t_x₂ - t_x, succ_num[p_x]
+        # if x == 13
+        #     @printf("x = 13 p[x] = %d z = %d, y = %d w = %d p_z = %d f_p_x = %d s_w = %d", p_x,z,y,w,p_z,f_p_x,s_w)
+        #     println()
+        # end
 
         if p_z == p_x
+            s_w = f_p_x
             thread[y] = z
             thread[w] = p_x
             push!(dirty_revs, y)
@@ -125,6 +136,7 @@ function STEP_III(parents, thread, rev_thread, succ_num, last_succ, p, q, u, v, 
             w = f_p_x
             z = s_w
         else
+            s_w = y
             thread[w] = p_x
             push!(dirty_revs, w)
             w = y
@@ -134,12 +146,16 @@ function STEP_III(parents, thread, rev_thread, succ_num, last_succ, p, q, u, v, 
         p_x  = parents[x]
         y = rev_thread[x]
         p_z = parents[z]
-        s_w = thread[w]
         f_p_x = p_x > 0 ? last_succ[p_x] : 0
     end
+    println("DFSDFSDF     ", w)
     succ_num[y₂] = t_x₂
     parents[y₂] = 0
     if y₂ != x₂
+        # if last_succ[son_x] != last_succ[x]
+        #     thread[x] = thread[last_succ[son_x]]
+        #     thread[last_succ[x]] = y₂
+        # end
         parents[x₂] = son_x
         thread[w] = y₂
         push!(dirty_revs, w)
@@ -151,7 +167,9 @@ function STEP_III(parents, thread, rev_thread, succ_num, last_succ, p, q, u, v, 
 
         x = x₂
         while x != y₂
-            println("Stuck here 4")
+            if debug
+                println("Stuck here 4")
+            end
             last_succ[x] = last_succ[x₂]
             x = parents[x]
         end
@@ -177,7 +195,10 @@ function STEP_IV(parents, thread, rev_thread, succ_num, last_succ, p, q, u, v, x
     thread[y₁], rev_thread[y₂] = y₂, y₁
     x = y₁
     while x != 0
-        println("Stuck here 5")
+        if debug
+            println("Stuck here 5")
+        end
+        # println(parents)
         succ_num[x] += t_y₂
         x = parents[x]
     end
@@ -187,7 +208,16 @@ function STEP_IV(parents, thread, rev_thread, succ_num, last_succ, p, q, u, v, x
     end
     x = y₁
     while x != x̄
-        println("Stuck here + ", (y₁, x, x̄))
+        if debug
+            println("Stuck here + ", (y₁, x, x̄))
+        end
+        # if x < 1
+        #     println(parents)
+        #     println(thread)
+        #     println(rev_thread)
+        #     println(succ_num)
+        #     println(last_succ)
+        # end
         last_succ[x] = f_y₂
         x = parents[x]
     end
@@ -197,6 +227,8 @@ function STEP_IV(parents, thread, rev_thread, succ_num, last_succ, p, q, u, v, x
 end
 
 function update(parents, thread, rev_thread, succ_num, last_succ, p, q, u, v)
+    # println((p,q,u,v))
+    # println(parents)
     ################# STEP I #################
     STEP_I(parents, thread, rev_thread, succ_num, last_succ, p, q, u, v)
 
@@ -212,7 +244,9 @@ function update(parents, thread, rev_thread, succ_num, last_succ, p, q, u, v)
     prev = y₁
     tmp = last_succ[y₂]
     while prev != tmp
-        println("Stuck here 5")
+        if debug
+            println("Stuck here 8")
+        end
         _potential[curr] = cost(curr, prev) - _potential[prev]
         prev, curr = curr, thread[curr]
     end
@@ -231,7 +265,9 @@ function flow(a,b)
 end
 
 function cost(a, b)
-    println("Lol here ", (a, b))
+    if debug
+        println("Lol here ", (a, b))
+    end
     return _cost[min(a,b), max(a,b)-n]
 end
 
@@ -263,7 +299,7 @@ function g(a)
 end
 
 # Returns the two nodes between which the entering edge lies
-function find_entering(n,m,_cost, _potential)
+function find_entering(n, m, _cost, _potential)
     curr_min = 0
     enter1 = enter2 = -1
     for i in 1:n
@@ -278,6 +314,9 @@ function find_entering(n,m,_cost, _potential)
     return enter1, enter2
 end
 
+debug_enter1 = 0
+debug_enter2 = 0
+
 # Input = (enter1, enter2) the edge being added and flow where flow[(i-1)*m+j] is the flow between (i,j)
 function find_leaving(enter1, enter2, parents, succ_num)
     left,right = enter1, enter2
@@ -287,7 +326,9 @@ function find_leaving(enter1, enter2, parents, succ_num)
     left_δ = right_δ = 1
     left_left = left_right = right_left = right_right = -1
     while left != right
-        println("Stuck here 6")
+        if debug
+            println("Stuck here 6")
+        end
         if succ_num[left] > succ_num[right]
             p_right = parents[right]
             if p_right < right
@@ -325,7 +366,7 @@ function find_leaving(enter1, enter2, parents, succ_num)
     end
 end
 
-function update_flow(u,v,δ, parents, succ_num)
+function update_flow(u, v, δ, parents, succ_num)
     left,right = u, v
     if u > v
         left,right = right, left
@@ -333,7 +374,9 @@ function update_flow(u,v,δ, parents, succ_num)
     # println("LOL Adding δ to edge ", (left, right))
     _flow[left, right - n] = δ
     while left != right
-        println("Stuck here 7")
+        if debug
+            println("Stuck here 7")
+        end
         if succ_num[left] > succ_num[right]
             p_right = parents[right]
             if p_right < right
@@ -358,73 +401,40 @@ function update_flow(u,v,δ, parents, succ_num)
     end
 end
 
-# n=2
-# m=3
-# _cost = (randn(2) .- randn(3)').^2
-# a = ones(1, n)./n
-# b = ones(1, m)./m
-# _flow = [1/3 1/6 0; 0 1/6 1/3]
-# # _f = [0, cost(2,4)-cost(1,4)]
-# # _g = [cost(1,3),cost(1,4), cost(2,5) - (cost(2,4) - cost(1,4))]
-# _potential = [0, cost(2,4)-cost(1,4), cost(1,3),cost(1,4), cost(2,5) - (cost(2,4) - cost(1,4))]
-# # println(_cost - (_potential[1:n] .+ _potential[end-m:end]'))
-#
-# parents = [0,4,1,1,2]
-# thread = [4,5,1,2,3]
-# rev_thread = [3, 4, 5, 1, 2]
-# succ_num = [5, 2, 1, 3, 1]
-# last_succ = [3, 5, 3, 5, 5]
-#
-# # (u,v,p,q) = (5,1,1,4)
-# # update(parents, thread, rev_thread, succ_num, last_succ, p, q, u, v)
-#
-#
-#
-# @time γ = OptimalTransport.emd(vec(a), vec(b), _cost)
-#
-# @time while true
-#     enter1, enter2 = find_entering()
-#     δ, u, v, p, q = find_leaving(enter1, enter2, parents, succ_num)
-#
-#     if u > 0 && (u,v) != (q,p)
-#         update_flow(u, v, δ, parents, succ_num)
-#         update(parents, thread, rev_thread, succ_num, last_succ, p, q, u, v)
-#     else
-#         break
-#     end
-# end
-
 function objective(P,C)
     return sum(P.*C)
 end
-
-
-# enter1, enter2 = find_entering(n,n,_cost, _potential)
-# δ, u, v, p, q = find_leaving(enter1, enter2, parents, succ_num)
-#
-# update_flow(u, v, δ, parents, succ_num)
-# update(parents, thread, rev_thread, succ_num, last_succ, p, q, u, v)
 
 function my_emd()
     maxiter = 100
     while maxiter > 0
         # println(maxiter)
         enter1, enter2 = find_entering(n,n,_cost, _potential)
+        if enter1 < 1
+            break
+        end
         δ, u, v, p, q = find_leaving(enter1, enter2, parents, succ_num)
+        if (u-n)*(v-n) > 0 || (p-n)*(q-n) > 0
+            if debug
+                println((u,v,p,q))
+            end
+            return
+        end
 
-        if u > 0 && (u,v) != (q,p)
+        if (u,v) != (q,p)
             update_flow(u, v, δ, parents, succ_num)
             update(parents, thread, rev_thread, succ_num, last_succ, p, q, u, v)
         else
             break
         end
         maxiter -= 1
+        # println(objective(_flow, _cost))
     end
 end
 
 
 
-n = 6
+n = 11
 a = b = ones(1, n)./n
 parents = vcat(0, (n+2):2n, 1, 1:(n-1))
 thread = vcat((n+2):2n, n+1, 1, 2:n)
@@ -432,6 +442,8 @@ rev_thread = vcat(5, (n+2):2n, n, 1:(n-1))
 succ_num = vcat(2n, (2n-2:-2:2).-1, 1, (2(n-1)):-2:2)
 last_succ = vcat(5, fill(n, n-1), n+1, fill(n, n-1))
 
+# badcost_n7 = copy(_cost)
+_cost = badcost_n7
 _cost = (randn(n) .- randn(n)').^2
 _flow = Matrix(I(n)/n)
 _potential = zeros(2n)
@@ -442,9 +454,59 @@ for i in 2:n
 end
 _potential[n+1] = _cost[1,1]
 
-
-my_emd()
-
-γ = OptimalTransport.emd(vec(a), vec(b), _cost)
-
+debug = false
+@time my_emd()
+println("###############################################")
+@time γ = OptimalTransport.emd(vec(a), vec(b), _cost)
+# # # #
 println(γ == _flow)
+
+println(parents)
+
+
+
+enter1, enter2 = find_entering(n,n,_cost, _potential)
+# if enter1 < 1
+#     break
+# end
+δ, u, v, p, q = find_leaving(enter1, enter2, parents, succ_num)
+println((δ, u, v, p, q))
+
+# println()
+
+
+
+if (u-n)*(v-n) > 0 || (p-n)*(q-n) > 0
+    if debug
+        println((u,v,p,q))
+    end
+end
+
+update_flow(u, v, δ, parents, succ_num)
+update(parents, thread, rev_thread, succ_num, last_succ, p, q, u, v)
+
+
+
+println(parents)
+println(thread)
+println(last_succ)
+println(succ_num)
+
+STEP_I(parents, thread, rev_thread, succ_num, last_succ, p, q, u, v)
+x₁ = 1
+x₂ = q
+y₁ = v
+y₂ = u
+STEP_III(parents, thread, rev_thread, succ_num, last_succ, p, q, u, v, x₁, x₂, y₁, y₂)
+STEP_IV(parents, thread, rev_thread, succ_num, last_succ, p, q, u, v, x₁, x₂, y₁, y₂)
+
+
+# Example that breaks
+# 7×7 Array{Float64,2}:
+#  3.00742   0.397879     0.0432664  1.42703     1.54062   1.78901   0.720337
+#  0.310347  3.26843      1.91853    0.0003056   5.84828   6.32343   0.107831
+#  5.74308   0.000992528  0.206366   3.44795     0.335169  0.455975  2.28314
+#  6.31435   0.0218655    0.325631   3.89364     0.213973  0.312362  2.64834
+#  0.888117  2.0237       0.999594   0.162242    4.13313   4.53405   0.00324159
+#  0.279257  3.3728       1.99869    0.00012451  5.98762   6.46829   0.127461
+#  0.474225  2.81008      1.57141    0.0222109   5.22932   5.67912   0.0387401
